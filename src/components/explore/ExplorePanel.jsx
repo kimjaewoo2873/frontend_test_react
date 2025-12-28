@@ -2,14 +2,17 @@ import { useState } from 'react';
 
 export default function ExplorePanel({ jobs, selectedSlug, onSelect, loading }) {
   const [category, setCategory] = useState('전체');
-const categories = ['전체', ...Array.from(new Set((jobs ?? [])
-  .map(j => j.category)
-  .filter(Boolean)
-))];
+  
+  // category가 객체이므로 major 필드를 사용
+  const categories = ['전체', ...Array.from(new Set(
+    (jobs ?? [])
+      .map(j => j.category?.major || '기타')
+      .filter(Boolean)
+  ))];
 
   const filteredJobs = category === '전체' 
     ? jobs 
-    : jobs.filter(j => j.category === category);
+    : jobs.filter(j => (j.category?.major || '기타') === category);
 
   return (
     <div style={{
@@ -89,6 +92,11 @@ const categories = ['전체', ...Array.from(new Set((jobs ?? [])
               <div style={{ fontSize: 12, color: '#9ca3af' }}>
                 {job.job_slug}
               </div>
+              {job.category && (
+                <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>
+                  {job.category.major} {job.category.middle && `> ${job.category.middle}`}
+                </div>
+              )}
             </button>
           ))}
         </div>
