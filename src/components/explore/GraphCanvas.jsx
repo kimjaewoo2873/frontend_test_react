@@ -76,8 +76,8 @@ const calculateForceLayout = (nodes, edges) => {
 };
 
 export default function GraphCanvas({ selectedSlug, onNodeClick, showAllNodes = true, selectedJobs = [] }) {
-  const [allNodesData, setAllNodesData] = useState([]); // 원본 노드 데이터 (불변)
-  const [allEdgesData, setAllEdgesData] = useState([]); // 원본 엣지 데이터
+  const [allNodesData, setAllNodesData] = useState([]);
+  const [allEdgesData, setAllEdgesData] = useState([]);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [edgeFilters, setEdgeFilters] = useState({
@@ -92,8 +92,8 @@ export default function GraphCanvas({ selectedSlug, onNodeClick, showAllNodes = 
   const [isZoomedIn, setIsZoomedIn] = useState(false);
   const { fitView, setCenter } = useReactFlow();
   
-  // 각 노드의 현재 위치를 추적하는 ref
   const nodePositionsRef = useRef({});
+  const previousSelectedSlugRef = useRef(null);
 
   // 초기 데이터 로드
   useEffect(() => {
@@ -109,7 +109,6 @@ export default function GraphCanvas({ selectedSlug, onNodeClick, showAllNodes = 
       } else {
         const layoutedNodes = calculateForceLayout(graphNodes, graphEdges);
         
-        // 초기 위치 저장
         layoutedNodes.forEach(node => {
           nodePositionsRef.current[node.id] = { ...node.position };
         });
@@ -132,21 +131,18 @@ export default function GraphCanvas({ selectedSlug, onNodeClick, showAllNodes = 
     if (allNodesData.length === 0) return;
 
     if (showAllNodes) {
-      // 전체 보기 모드 - ref의 위치 사용
       const nodesWithPosition = allNodesData.map(node => ({
         ...node,
         position: nodePositionsRef.current[node.id] || node.position
       }));
       setNodes(nodesWithPosition);
       
-      // 엣지 필터 적용
       const filteredEdges = allEdgesData.filter(edge => {
         const relationType = edge.data?.relationType || edge.label;
         return edgeFilters[relationType];
       });
       setEdges(filteredEdges);
     } else {
-      // 숨김 모드 - 선택된 직업만 표시
       if (selectedJobs.length === 0) {
         setNodes([]);
         setEdges([]);
@@ -160,7 +156,6 @@ export default function GraphCanvas({ selectedSlug, onNodeClick, showAllNodes = 
           }));
         setNodes(filteredNodes);
         
-        // 선택된 노드들 사이의 엣지만 표시
         const filteredEdges = allEdgesData.filter(edge => {
           const relationType = edge.data?.relationType || edge.label;
           const hasFilter = edgeFilters[relationType];
@@ -197,38 +192,33 @@ export default function GraphCanvas({ selectedSlug, onNodeClick, showAllNodes = 
     []
   );
 
-  // 커스텀 onNodesChange - 드래그만 허용, 위치 업데이트는 ref에 저장
+  // 커스텀 onNodesChange
   const handleNodesChange = useCallback((changes) => {
     changes.forEach(change => {
-      // 드래그로 인한 위치 변경은 ref에 저장
       if (change.type === 'position' && change.position && !change.dragging) {
         nodePositionsRef.current[change.id] = { ...change.position };
       }
     });
     
-    // React Flow에 변경사항 전달 (드래그 가능하도록)
     onNodesChange(changes);
   }, [onNodesChange]);
 
-  // 선택된 노드 강조 - 스타일만 변경, 위치는 유지
+  // 선택된 노드 스타일만 변경 (위치 변경 없음)
   useEffect(() => {
-    if (nodes.length === 0) return;
+    if (nodes.length === 0 || selectedSlug === previousSelectedSlugRef.current) return;
+    
+    previousSelectedSlugRef.current = selectedSlug;
     
     setNodes((nds) =>
       nds.map((node) => {
         const isSelected = node.id === selectedSlug;
         
-        // 현재 위치 유지 (ref에서 가져옴)
-        const currentPosition = nodePositionsRef.current[node.id] || node.position;
-        
         return {
           ...node,
-          position: currentPosition, // 항상 ref의 위치 사용
           style: {
             ...node.style,
             border: isSelected ? '4px solid #3b82f6' : '2px solid #3b82f6',
             background: isSelected ? '#eff6ff' : '#fff',
-            transform: isSelected ? 'scale(1.15)' : 'scale(1)',
             transition: 'all 0.3s ease',
             boxShadow: isSelected 
               ? '0 12px 24px rgba(59, 130, 246, 0.4), 0 0 0 4px rgba(59, 130, 246, 0.1)' 
@@ -238,9 +228,9 @@ export default function GraphCanvas({ selectedSlug, onNodeClick, showAllNodes = 
         };
       })
     );
-  }, [selectedSlug, setNodes]);
+  }, [selectedSlug]); // setNodes 제거!
 
-  // 노드 클릭 핸들러 - 줌만 변경
+  // 노드 클릭 핸들러
   const handleNodeClick = useCallback((event, node) => {
     if (!onNodeClick) return;
 
@@ -248,15 +238,12 @@ export default function GraphCanvas({ selectedSlug, onNodeClick, showAllNodes = 
     const currentPosition = nodePositionsRef.current[node.id] || node.position;
 
     if (isSameNode && isZoomedIn) {
-      // 같은 노드 재클릭 (줌인 상태) -> 줌 아웃
       fitView({ padding: 0.15, duration: 600 });
       setIsZoomedIn(false);
     } else if (isSameNode && !isZoomedIn) {
-      // 같은 노드 재클릭 (줌 아웃 상태) -> 줌인
       setCenter(currentPosition.x, currentPosition.y, { zoom: 1.5, duration: 600 });
       setIsZoomedIn(true);
     } else {
-      // 다른 노드 클릭 -> 선택 변경 + 줌인
       onNodeClick(node.id);
       setIsZoomedIn(false);
       setTimeout(() => {
@@ -344,7 +331,6 @@ export default function GraphCanvas({ selectedSlug, onNodeClick, showAllNodes = 
 
   return (
     <div style={{ height: '100%', background: '#fafafa', position: 'relative' }}>
-      {/* 엣지 필터 패널 */}
       <div style={{ position: 'absolute', top: 20, left: 20, zIndex: 10, background: 'white', borderRadius: 12, padding: 16, boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)', minWidth: 220, maxWidth: 260 }}>
         <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 14, color: '#1f2937', display: 'flex', alignItems: 'center', gap: 8 }}>
           <span>🔍</span><span>연결 관계 필터</span>
