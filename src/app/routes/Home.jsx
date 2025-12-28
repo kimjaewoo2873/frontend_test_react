@@ -23,7 +23,8 @@ export default function Home() {
       setError(null);
       
       const { data, error } = await fetchJobs();
-      
+      console.log("jobs data:", data);
+
       if (error) {
         console.error('Failed to fetch jobs:', error);
         setError(error.message);
@@ -35,6 +36,7 @@ export default function Home() {
     }
     
     loadJobs();
+    
   }, []);
 
   // 선택된 직업 상세 정보 로드
