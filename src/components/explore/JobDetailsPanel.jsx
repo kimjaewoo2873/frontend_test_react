@@ -82,6 +82,8 @@ export default function JobDetailPanel({ jobSlug, onNavigate, jobData, loading }
     { id: 'basic', label: '기본 정보', icon: '📋' },
     { id: 'skills', label: '스킬', icon: '💡' },
     { id: 'roadmap', label: '로드맵', icon: '🗺️' },
+    { id: 'programs', label: '프로그램', icon: '🎓' },
+    { id: 'benefits', label: '혜택/지원', icon: '💰' },
     { id: 'edges', label: '연결 직업', icon: '🔗' },
     { id: 'evidence', label: '근거', icon: '📄' }
   ];
@@ -465,6 +467,129 @@ export default function JobDetailPanel({ jobSlug, onNavigate, jobData, loading }
               }}>
                 <div style={{ fontSize: 48, marginBottom: 12 }}>🗺️</div>
                 로드맵 정보가 없습니다
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'programs' && (
+          <div>
+            {job.programs && job.programs.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {job.programs.map((program, idx) => (
+                  <div key={idx} style={{ padding: 20, background: 'white', border: '2px solid #e5e7eb', borderRadius: 12, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 12 }}>
+                      <div>
+                        <h4 style={{ margin: '0 0 8px 0', fontSize: 17, fontWeight: 700, color: '#1f2937' }}>
+                          {program.name}
+                        </h4>
+                        <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 4 }}>
+                          📍 {program.provider} · {program.type}
+                        </div>
+                      </div>
+                      {program.url && (
+                        <a href={program.url} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#3b82f6', textDecoration: 'none', fontWeight: 600, padding: '6px 12px', borderRadius: 8, background: '#eff6ff', transition: 'all 0.2s' }}>
+                          <span>상세보기</span>
+                          <ExternalLink size={14} />
+                        </a>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+                      {program.duration && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 12px', background: '#f3f4f6', borderRadius: 8, fontSize: 13 }}>
+                          <Clock size={14} />
+                          {program.duration}
+                        </span>
+                      )}
+                      {program.cost && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 12px', background: program.cost.includes('무료') || program.cost.includes('국비') ? '#d1fae5' : '#fef3c7', borderRadius: 8, fontSize: 13, fontWeight: 600, color: program.cost.includes('무료') || program.cost.includes('국비') ? '#065f46' : '#92400e' }}>
+                          💰 {program.cost}
+                        </span>
+                      )}
+                      {program.target && (
+                        <span style={{ padding: '6px 12px', background: '#ede9fe', borderRadius: 8, fontSize: 13, color: '#5b21b6' }}>
+                          👤 {program.target}
+                        </span>
+                      )}
+                    </div>
+                    {program.source_url && (
+                      <a href={program.source_url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#9ca3af', textDecoration: 'none', marginTop: 8 }}>
+                        📄 출처 확인
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: 60, color: '#9ca3af', background: 'white', borderRadius: 12, border: '1px solid #e5e7eb' }}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>🎓</div>
+                프로그램 정보가 없습니다
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'benefits' && (
+          <div>
+            {job.benefits && job.benefits.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {job.benefits.map((benefit, idx) => (
+                  <div key={idx} style={{ padding: 20, background: 'white', border: '2px solid #e5e7eb', borderRadius: 12, boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 12 }}>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ margin: '0 0 8px 0', fontSize: 17, fontWeight: 700, color: '#1f2937' }}>
+                          {benefit.name}
+                        </h4>
+                        <div style={{ display: 'inline-flex', padding: '4px 10px', background: '#dbeafe', borderRadius: 6, fontSize: 12, fontWeight: 600, color: '#1e40af', marginBottom: 8 }}>
+                          {benefit.type}
+                        </div>
+                        {benefit.provider && (
+                          <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>
+                            🏢 {benefit.provider}
+                          </div>
+                        )}
+                      </div>
+                      {benefit.url && (
+                        <a href={benefit.url} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#3b82f6', textDecoration: 'none', fontWeight: 600, padding: '6px 12px', borderRadius: 8, background: '#eff6ff', transition: 'all 0.2s' }}>
+                          <span>신청하기</span>
+                          <ExternalLink size={14} />
+                        </a>
+                      )}
+                    </div>
+                    {benefit.amount && (
+                      <div style={{ padding: 14, background: '#fef3c7', borderRadius: 8, marginBottom: 12, border: '1px solid #fbbf24' }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: '#92400e' }}>
+                          💰 지원 금액: {benefit.amount}
+                        </div>
+                      </div>
+                    )}
+                    {benefit.requirements && (
+                      <div style={{ marginBottom: 12 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#4b5563', marginBottom: 6 }}>
+                          ✅ 신청 요건
+                        </div>
+                        <div style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.6 }}>
+                          {benefit.requirements}
+                        </div>
+                      </div>
+                    )}
+                    {benefit.period && (
+                      <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 8 }}>
+                        📅 신청 기간: {benefit.period}
+                      </div>
+                    )}
+                    {benefit.source_url && (
+                      <a href={benefit.source_url} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#9ca3af', textDecoration: 'none' }}>
+                        📄 출처 확인
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: 60, color: '#9ca3af', background: 'white', borderRadius: 12, border: '1px solid #e5e7eb' }}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>💰</div>
+                혜택/지원 정보가 없습니다
               </div>
             )}
           </div>

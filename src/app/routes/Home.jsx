@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { ReactFlowProvider } from 'reactflow';
 
+import LandingPage from '../../components/LandingPage';
 import Header from '../../components/layout/Header';
 import ExplorePanel from '../../components/explore/ExplorePanel';
 import GraphCanvas from '../../components/explore/GraphCanvas';
@@ -8,13 +9,15 @@ import JobDetailPanel from '../../components/explore/JobDetailsPanel';
 
 import { fetchJobs, fetchJobDetail } from '../../lib/supabase/jobsApi';
 
-
 export default function Home() {
+  const [showLanding, setShowLanding] = useState(true);
   const [jobs, setJobs] = useState([]);
   const [selectedSlug, setSelectedSlug] = useState(null);
+  const [selectedJobs, setSelectedJobs] = useState([]); // 선택된 직업들의 배열
   const [jobDetail, setJobDetail] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showAllNodes, setShowAllNodes] = useState(true); // 로드맵 전체 보기/숨김
 
   // 직업 목록 로드
   useEffect(() => {
@@ -76,13 +79,75 @@ export default function Home() {
     loadJobDetail();
   }, [selectedSlug]);
 
-  const handleNodeClick = useCallback((slug) => {
-    setSelectedSlug(slug);
+  const handleStart = useCallback(() => {
+    setShowLanding(false);
   }, []);
+
+  const handleSearch = useCallback((query) => {
+    // TODO: 검색 기능 구현
+    console.log('Search query:', query);
+    setShowLanding(false);
+    // 검색 결과에 맞는 직업 필터링 로직 추가 예정
+  }, []);
+
+  // GraphCanvas에서 노드 클릭 시 호출 (선택만 변경)
+  const handleNodeClick = useCallback((slug) => {
+    // slug가 null이면 무시 (GraphCanvas 내부에서 줌만 처리)
+    if (slug === null) return;
+    
+    setSelectedSlug(slug);
+    
+    // 숨김 모드일 때만 selectedJobs에 추가
+    if (!showAllNodes) {
+      setSelectedJobs(prev => {
+        if (!prev.includes(slug)) {
+          return [...prev, slug];
+        }
+        return prev;
+      });
+    }
+  }, [showAllNodes]);
+
+  // ExplorePanel에서 직업 클릭 시 호출
+  const handleSelectJob = useCallback((slug) => {
+    setSelectedSlug(slug);
+    
+    // 숨김 모드일 때만 selectedJobs에 추가
+    if (!showAllNodes) {
+      setSelectedJobs(prev => {
+        if (!prev.includes(slug)) {
+          return [...prev, slug];
+        }
+        return prev;
+      });
+    }
+  }, [showAllNodes]);
 
   const handleNavigate = useCallback((slug) => {
     setSelectedSlug(slug);
-  }, []);
+    
+    // 숨김 모드일 때만 selectedJobs에 추가
+    if (!showAllNodes) {
+      setSelectedJobs(prev => {
+        if (!prev.includes(slug)) {
+          return [...prev, slug];
+        }
+        return prev;
+      });
+    }
+  }, [showAllNodes]);
+
+  const handleToggleAllNodes = useCallback(() => {
+    setShowAllNodes(prev => !prev);
+    // 전체 보기로 전환 시 선택 목록 초기화
+    if (!showAllNodes) {
+      setSelectedJobs([]);
+    }
+  }, [showAllNodes]);
+
+  if (showLanding) {
+    return <LandingPage onStart={handleStart} onSearch={handleSearch} />;
+  }
 
   if (error && jobs.length === 0) {
     return (
@@ -134,13 +199,17 @@ export default function Home() {
           <ExplorePanel
             jobs={jobs}
             selectedSlug={selectedSlug}
-            onSelect={setSelectedSlug}
+            onSelect={handleSelectJob}
             loading={loading && jobs.length === 0}
+            showAllNodes={showAllNodes}
+            onToggleAllNodes={handleToggleAllNodes}
           />
           
           <GraphCanvas 
             selectedSlug={selectedSlug} 
             onNodeClick={handleNodeClick}
+            showAllNodes={showAllNodes}
+            selectedJobs={selectedJobs}
           />
           
           <div style={{ borderLeft: '1px solid #e5e7eb', background: 'white' }}>
